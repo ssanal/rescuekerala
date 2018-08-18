@@ -1,4 +1,5 @@
 from django.urls import path
+from django.views.generic import TemplateView
 
 from . import views
 
@@ -20,5 +21,9 @@ urlpatterns = [
     path('map/' , views.mapview , name="mapview"),
     path('dmodash/' , views.dmodash , name="DMODash"),
     path('dmoinfo/' , views.dmoinfo , name="DMOInfo" ),
-    path('reliefcenters/', views.relief_center_list, name='listcenters')
+    path('reliefcenters/', views.relief_center_list, name='listcenters'),
+
+    path('add_relief_center/', views.AddReliefCenter.as_view(), name='add_relief_center'),
+    path('update_relief_center/<int:pk>/', views.UpdateReliefCenter.as_view(), name='update_relief_center'),
+    path('relief_success/', TemplateView.as_view(template_name='mainapp/relief_success.html'), name='relief_success'),
 ]
