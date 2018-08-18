@@ -1,7 +1,12 @@
+from random import randint
+
+from django import forms
 from django.http import HttpResponse
 from django.shortcuts import render
+from django.urls import reverse
+from django.views.generic import DetailView
 from django.views.generic.edit import CreateView, UpdateView
-from django.views.generic.base import TemplateView
+from django.views.generic.base import TemplateView, View
 from django.views.generic import ListView
 from .models import Request, Volunteer, DistrictManager, Contributor, DistrictNeed
 from .models import ReliefCenter, ReliefCampDemand, CollectionCenterSupply, SupplyTransaction, SupplyTransactionLog
@@ -184,6 +189,66 @@ class AddReliefCenter(CreateView):
         context['heading'] = "Add Relief Center"
         return context
 
+    def form_valid(self, form):
+        obj = form.save(commit=False)
+        obj.login_pin = randint(1000, 9999)
+        obj.save()
+        return HttpResponseRedirect(reverse('add_relief_success', kwargs={'pk': obj.pk}))
+
+
+class AddReliefCenterSuccess(TemplateView):
+    template_name = 'mainapp/relief_success.html'
+
+    def get(self, request, *args, **kwargs):
+        response = super().get(request, *args, **kwargs)
+        relief_id = self.kwargs['pk']
+        response.set_cookie("id", relief_id)
+        return response
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data()
+        relief_id = self.kwargs['pk']
+        relief_center = ReliefCenter.objects.get(pk=relief_id)
+        context["id"] = relief_id
+        context["pin"] = relief_center.login_pin
+        return context
+
+
+class ReliefCenterLoginForm(forms.Form):
+    id = forms.CharField(max_length=10)
+    pin = forms.IntegerField()
+
+
+class ReliefCenterLogin(TemplateView):
+
+    template_name = 'mainapp/relief_center_login.html'
+
+    def post(self, request, *args, **kwargs):
+
+        form = ReliefCenterLoginForm(request.POST)
+        messages = []
+
+        if form.is_valid():
+            relief_id = request.POST.get("id")
+            pin = request.POST.get("pin")
+            relief_center = None
+
+            try:
+                relief_center = ReliefCenter.objects.get(id=id)
+                if pin == relief_center.pin:
+                    # TODO return to the correct page
+                    pass
+                else:
+                    messages = ["Login error, pin is wrong"]
+            except ReliefCenter.DoesNotExist:
+                messages = ["Login error, id is wrong"]
+        return render(request, self.template_name, {'form': form, 'messages': messages})
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data()
+        context['form'] = ReliefCenterLoginForm()
+        return context
+
 
 class UpdateReliefCenter(UpdateView):
     model = ReliefCenter
@@ -204,6 +269,19 @@ class UpdateReliefCenter(UpdateView):
         context = super().get_context_data()
         context['heading'] = "Update Relief Center"
         return context
+
+    def get(self, request, *args, **kwargs):
+        relief_id = request.COOKIES.get('id', None)
+        if relief_id is not None:
+            try:
+                relief_id = ReliefCenter.objects.get(id=relief_id)
+                if relief_id.pk == self.kwargs.get("id", None):
+                    return super().get(self, request, args, kwargs)
+                else:
+                    return HttpResponseRedirect(reverse('relief_center_login'))
+            except ReliefCenter.DoesNotExist:
+                return HttpResponseRedirect(reverse('relief_center_login'))
+
 
 # TODO doesnt work 
 class ListReliefCenters(ListView):

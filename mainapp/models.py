@@ -230,6 +230,7 @@ class ReliefCenter(models.Model):
     no_children = models.IntegerField(default=0)
     no_elder = models.IntegerField(default=0)
     no_volunteers = models.IntegerField(default=0)
+    login_pin = models.IntegerField(default=0, blank=True, null=True)
 
 
 class ReliefCampDemand(models.Model):

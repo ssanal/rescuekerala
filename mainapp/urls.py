@@ -26,4 +26,6 @@ urlpatterns = [
     path('add_relief_center/', views.AddReliefCenter.as_view(), name='add_relief_center'),
     path('update_relief_center/<int:pk>/', views.UpdateReliefCenter.as_view(), name='update_relief_center'),
     path('relief_success/', TemplateView.as_view(template_name='mainapp/relief_success.html'), name='relief_success'),
+    path('add_relief_success/<int:pk>/', views.AddReliefCenterSuccess.as_view(), name='add_relief_success'),
+    path('relief_center_login/', views.ReliefCenterLogin.as_view(), name='relief_center_login'),
 ]
