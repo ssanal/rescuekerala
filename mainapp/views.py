@@ -1,17 +1,18 @@
 from django.http import HttpResponse
 from django.shortcuts import render
-from django.views.generic.edit import CreateView
+from django.views.generic.edit import CreateView, UpdateView
 from django.views.generic.base import TemplateView
 from .models import Request, Volunteer, DistrictManager, Contributor, DistrictNeed
-from .models import ReliefCenter, ReliefCampDemand, CollectionCenterSupply, SupplyTransaction, SupplyTransactionLog 
+from .models import ReliefCenter, ReliefCampDemand, CollectionCenterSupply, SupplyTransaction, SupplyTransactionLog
 import django_filters
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.http import JsonResponse
 from django.http import HttpResponseRedirect
 
+
 class CreateRequest(CreateView):
     model = Request
-    template_name='mainapp/request_form.html'
+    template_name = 'mainapp/request_form.html'
     fields = [
         'district',
         'location',
@@ -47,7 +48,7 @@ class RegisterVolunteer(CreateView):
 
 class RegisterContributor(CreateView):
     model = Contributor
-    fields = ['name', 'district', 'phone', 'address',  'commodities']
+    fields = ['name', 'district', 'phone', 'address', 'commodities']
     success_url = '/contrib_success'
 
 
@@ -66,11 +67,14 @@ class RegSuccess(TemplateView):
 class ContribSuccess(TemplateView):
     template_name = "mainapp/contrib_success.html"
 
+
 class DisclaimerPage(TemplateView):
     template_name = "mainapp/disclaimer.html"
 
+
 class AboutIEEE(TemplateView):
     template_name = "mainapp/aboutieee.html"
+
 
 class DistNeeds(TemplateView):
     template_name = "mainapp/district_needs.html"
@@ -83,19 +87,17 @@ class DistNeeds(TemplateView):
         return context
 
 
-
-
 class RequestFilter(django_filters.FilterSet):
     class Meta:
         model = Request
         # fields = ['district', 'status', 'needwater', 'needfood', 'needcloth', 'needmed', 'needkit_util', 'needtoilet', 'needothers',]
 
         fields = {
-                    'district' : ['exact'],
-                    'requestee' : ['icontains'],
-                    'requestee_phone' : ['exact'],
-                    'location' : ['exact']
-                 }
+            'district': ['exact'],
+            'requestee': ['icontains'],
+            'requestee_phone': ['exact'],
+            'location': ['exact']
+        }
 
     def __init__(self, *args, **kwargs):
         super(RequestFilter, self).__init__(*args, **kwargs)
@@ -105,12 +107,12 @@ class RequestFilter(django_filters.FilterSet):
 
 
 def request_list(request):
-    filter = RequestFilter(request.GET, queryset=Request.objects.all() )
+    filter = RequestFilter(request.GET, queryset=Request.objects.all())
     req_data = filter.qs.order_by('-dateadded')
     paginator = Paginator(req_data, 100)
     page = request.GET.get('page')
     req_data = paginator.get_page(page)
-    return render(request, 'mainapp/request_list.html', {'filter': filter , "data" : req_data })
+    return render(request, 'mainapp/request_list.html', {'filter': filter, "data": req_data})
 
 
 class DistrictManagerFilter(django_filters.FilterSet):
@@ -124,9 +126,11 @@ class DistrictManagerFilter(django_filters.FilterSet):
         if self.data == {}:
             self.queryset = self.queryset.none()
 
+
 def districtmanager_list(request):
     filter = DistrictManagerFilter(request.GET, queryset=DistrictManager.objects.all())
     return render(request, 'mainapp/districtmanager_list.html', {'filter': filter})
+
 
 class Maintenance(TemplateView):
     template_name = "mainapp/maintenance.html"
@@ -135,31 +139,36 @@ class Maintenance(TemplateView):
 def mapdata(request):
     data = Request.objects.exclude(latlng__exact="").values()
 
-    return JsonResponse(list(data) , safe=False) 
+    return JsonResponse(list(data), safe=False)
+
 
 def mapview(request):
-    return render(request,"map.html")
+    return render(request, "map.html")
+
 
 def dmodash(request):
-    return render(request , "dmodash.html")
+    return render(request, "dmodash.html")
+
 
 def dmoinfo(request):
-    if("district" not in request.GET.keys()):return HttpResponseRedirect("/")
+    if ("district" not in request.GET.keys()): return HttpResponseRedirect("/")
     dist = request.GET.get("district")
-    reqserve = Request.objects.all().filter(status = "sup" , district = dist).count()
-    reqtotal = Request.objects.all().filter(district = dist).count()
-    volcount = Volunteer.objects.all().filter(district = dist).count()
-    conserve = Contributor.objects.all().filter(status = "ful" , district = dist).count()
-    contotal = Contributor.objects.all().filter(district = dist).count()
-    return render(request ,"dmoinfo.html",{"reqserve" : reqserve , "reqtotal" : reqtotal , "volcount" : volcount , "conserve" : conserve , "contotal" : contotal })
+    reqserve = Request.objects.all().filter(status="sup", district=dist).count()
+    reqtotal = Request.objects.all().filter(district=dist).count()
+    volcount = Volunteer.objects.all().filter(district=dist).count()
+    conserve = Contributor.objects.all().filter(status="ful", district=dist).count()
+    contotal = Contributor.objects.all().filter(district=dist).count()
+    return render(request, "dmoinfo.html",
+                  {"reqserve": reqserve, "reqtotal": reqtotal, "volcount": volcount, "conserve": conserve,
+                   "contotal": contotal})
+
 
 class AddReliefCenter(CreateView):
     model = ReliefCenter
-    template_name='mainapp/relief_center_form.html'
     fields = [
         'name',
         'district',
-        'type',
+        'center_type',
         'address',
         'latlng',
         'phone1',
@@ -167,23 +176,47 @@ class AddReliefCenter(CreateView):
         'phone3',
         'no_volunteers'
     ]
-    success_url = '/req_sucess'
-    
-class UpdateReliefCenter(CreateView):
-    pass
+    success_url = '/relief_success'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data()
+        context['heading'] = "Add Relief Center"
+        return context
+
+
+class UpdateReliefCenter(UpdateView):
+    model = ReliefCenter
+    fields = [
+        'name',
+        'district',
+        'center_type',
+        'address',
+        'latlng',
+        'phone1',
+        'phone2',
+        'phone3',
+        'no_volunteers'
+    ]
+    success_url = '/relief_success'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data()
+        context['heading'] = "Update Relief Center"
+        return context
+
 
 def relief_center_list(request):
-    filter = RequestFilter(request.GET, queryset=ReliefCenter.objects.all() )
+    filter = RequestFilter(request.GET, queryset=ReliefCenter.objects.all())
     req_data = filter.qs.order_by('name')
     paginator = Paginator(req_data, 100)
     page = request.GET.get('page')
     req_data = paginator.get_page(page)
-    return render(request, 'mainapp/relief_center_list.html', {'filter': filter , "data" : req_data })
- 
+    return render(request, 'mainapp/relief_center_list.html', {'filter': filter, "data": req_data})
+
 
 class AddReliefCampDemand(CreateView):
     model = ReliefCampDemand
-    template_name='mainapp/relief_camp_demand_form.html'
+    template_name = 'mainapp/relief_camp_demand_form.html'
     fields = [
         'centerid',
         'category',
@@ -193,9 +226,10 @@ class AddReliefCampDemand(CreateView):
     ]
     success_url = '/req_sucess'
 
+
 class AddCollectionCenterSupply(CreateView):
     model = CollectionCenterSupply
-    template_name='mainapp/collection_center_supply_form.html'
+    template_name = 'mainapp/collection_center_supply_form.html'
     fields = [
         'centerid',
         'category',
@@ -205,18 +239,18 @@ class AddCollectionCenterSupply(CreateView):
 
 
 def relief_supply_request_list(request):
-    filter = RequestFilter(request.GET, queryset=ReliefCampDemand.objects.all() )
+    filter = RequestFilter(request.GET, queryset=ReliefCampDemand.objects.all())
     req_data = filter.qs.order_by('-center_id')
     paginator = Paginator(req_data, 100)
     page = request.GET.get('page')
     req_data = paginator.get_page(page)
-    return render(request, 'mainapp/supply_request_list.html', {'filter': filter , "data" : req_data })
+    return render(request, 'mainapp/supply_request_list.html', {'filter': filter, "data": req_data})
+
 
 def relief_supply_stock_list(request):
-    filter = RequestFilter(request.GET, queryset=CollectionCenterSupply.objects.all() )
+    filter = RequestFilter(request.GET, queryset=CollectionCenterSupply.objects.all())
     req_data = filter.qs.order_by('-center_id')
     paginator = Paginator(req_data, 100)
     page = request.GET.get('page')
     req_data = paginator.get_page(page)
-    return render(request, 'mainapp/supply_stock_list.html', {'filter': filter , "data" : req_data })
- 
+    return render(request, 'mainapp/supply_stock_list.html', {'filter': filter, "data": req_data})
