@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% load bootstrap3 %}
+
+{% block content %}
+
+    <h3 class="text-center">
+      Relief center login
+  </h3>
+
+  <div class="text-center text-danger">
+      {% if messages %}
+        {% for message in messages %}
+          <h3>{{ message }}</h3>
+        {% endfor %}
+      {% endif %}
+  </div>
+
+  <form method="post"  class="simple-form">
+    {% csrf_token %}
+    {% bootstrap_form form %}
+    {% buttons %}
+    <button type="submit" class="btn btn-success">
+    Submit {% bootstrap_icon "chevron-right" %}
+    </button>
+    {% endbuttons %}
+
+  </form>
+
+{% endblock %}

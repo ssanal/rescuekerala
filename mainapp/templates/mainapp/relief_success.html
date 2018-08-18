@@ -3,6 +3,12 @@
 
 {% block content %}
 
-<h3>Successful!</h3>
+    <h3>Successful!</h3>
+
+    {% if id %}
+        <h2>Important: please write this down.</h2>
+        <h3>ID: {{ id }}</h3>
+        <h3>PIN: {{ pin }}</h3>
+    {% endif %}
 
 {% endblock %}
