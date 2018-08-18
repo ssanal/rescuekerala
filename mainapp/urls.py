@@ -19,5 +19,6 @@ urlpatterns = [
     path('data/' , views.mapdata , name="mapdata"),
     path('map/' , views.mapview , name="mapview"),
     path('dmodash/' , views.dmodash , name="DMODash"),
-    path('dmoinfo/' , views.dmoinfo , name="DMOInfo" )
+    path('dmoinfo/' , views.dmoinfo , name="DMOInfo" ),
+    path('reliefcenters/', views.relief_center_list, name='listcenters')
 ]

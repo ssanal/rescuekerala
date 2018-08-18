@@ -44,6 +44,21 @@ vol_categories = (
     ('oth', 'Other')
 )
 
+relief_center_types =(
+    ('Collection', 'Collection'),
+    ('Camp', 'Camp'),
+)
+
+relief_supply_category = (
+    ('water', 'water'),
+    ('food', 'food')
+)
+
+relief_supply_status = (
+    ('Allocated', 'Allocated'),
+    ('Shipped', 'Shipped'),
+    ('Received', 'Received')
+)
 class Request(models.Model):
     district = models.CharField(
         max_length = 15,
@@ -174,3 +189,67 @@ class DistrictCollection(models.Model):
     collection = models.TextField(
         verbose_name="Details of collected items"
     )
+
+class ReliefCenter(models.Model):
+    name = models.CharField(max_length=500,verbose_name='Name')
+    district = models.CharField(max_length=500,verbose_name='District')
+    center_type = models.CharField(
+        max_length=100,
+        choices=relief_center_types,
+        verbose_name='Type')
+    Address = models.CharField(max_length=500,verbose_name='Address')
+    phone1 = models.CharField(max_length=100,verbose_name='Phone1')
+    phone2 = models.CharField(max_length=100,verbose_name='Phone2')
+    phone3 = models.CharField(max_length=100,verbose_name='Phone3')
+    latlng = models.CharField(max_length=100, verbose_name='GPS Coordinates - GPS നിർദ്ദേശാങ്കങ്ങൾ ', blank=True)
+    latlng_accuracy = models.CharField(max_length=100, verbose_name='GPS Accuracy - GPS കൃത്യത ', blank=True)
+    no_men = models.IntegerField(default = 0)
+    no_women = models.IntegerField(default = 0)
+    no_infants = models.IntegerField(default = 0)
+    no_childen = models.IntegerField(default = 0)
+    no_elder = models.IntegerField(default = 0)
+      
+class ReliefCampDemand(models.Model):
+    center_id = models.ForeignKey(ReliefCenter, on_delete=models.CASCADE)
+    category = models.CharField(
+        max_length=100,
+        choices=relief_supply_category,
+        verbose_name='Type')
+    no_request = models.IntegerField(default = 0, verbose_name="Quantity")
+    total_request = models.IntegerField(default = 0, verbose_name="Total Quantity")
+    no_allocated = models.IntegerField(default = 0, verbose_name="Allocated")
+    total_allocated = models.IntegerField(default = 0, verbose_name="Total allocated")
+    notes = models.CharField(max_length=100,verbose_name='Notes')
+    quantity_type = models.CharField(max_length=100,verbose_name='Quantity Type')
+    critical = models.BooleanField(default=False, verbose_name="Critical")
+
+class CollectionCenterSupply(models.Model):
+    center_id = models.ForeignKey(ReliefCenter, on_delete=models.CASCADE)
+    category = models.CharField(
+        max_length=100,
+        choices=relief_supply_category,
+        verbose_name='Type')
+    received = models.IntegerField(default = 0, verbose_name="Received")
+    total_received = models.IntegerField(default = 0,verbose_name= "Total Received")
+    no_allocated = models.IntegerField(default = 0, verbose_name="Allocated")
+    total_allocated = models.IntegerField(default = 0, verbose_name="Total allocated")
+
+class SupplyTransaction(models.Model):
+    #collection_center_id = models.ForeignKey(ReliefCenter, on_delete=models.CASCADE)
+    #relief_center_id = models.ForeignKey(ReliefCenter, on_delete=models.CASCADE)
+    status = models.CharField(
+        max_length=100,
+        choices=relief_supply_status,
+        verbose_name='Status')
+    shipped = models.DateTimeField(auto_now_add=True,verbose_name='Shipped')
+    receieved = models.DateTimeField(auto_now_add=True,verbose_name='Received')
+    person = models.CharField(max_length=100,verbose_name='Person')
+
+class SupplyTransactionLog(models.Model):
+    transaction_id = models.ForeignKey(SupplyTransaction, on_delete=models.CASCADE)
+    category = models.CharField(
+        max_length=100,
+        choices=relief_supply_category,
+        verbose_name='Type')
+    quantity = models.IntegerField(default = 0, verbose_name="Quantity")
+

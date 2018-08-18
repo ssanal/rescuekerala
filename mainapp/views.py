@@ -3,6 +3,7 @@ from django.shortcuts import render
 from django.views.generic.edit import CreateView
 from django.views.generic.base import TemplateView
 from .models import Request, Volunteer, DistrictManager, Contributor, DistrictNeed
+from .models import ReliefCenter, ReliefCampDemand, CollectionCenterSupply, SupplyTransaction, SupplyTransactionLog 
 import django_filters
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.http import JsonResponse
@@ -151,3 +152,71 @@ def dmoinfo(request):
     conserve = Contributor.objects.all().filter(status = "ful" , district = dist).count()
     contotal = Contributor.objects.all().filter(district = dist).count()
     return render(request ,"dmoinfo.html",{"reqserve" : reqserve , "reqtotal" : reqtotal , "volcount" : volcount , "conserve" : conserve , "contotal" : contotal })
+
+class AddReliefCenter(CreateView):
+    model = ReliefCenter
+    template_name='mainapp/relief_center_form.html'
+    fields = [
+        'name',
+        'district',
+        'type',
+        'address',
+        'latlng',
+        'phone1',
+        'phone2',
+        'phone3',
+        'no_volunteers'
+    ]
+    success_url = '/req_sucess'
+    
+class UpdateReliefCenter(CreateView):
+    pass
+
+def relief_center_list(request):
+    filter = RequestFilter(request.GET, queryset=ReliefCenter.objects.all() )
+    req_data = filter.qs.order_by('name')
+    paginator = Paginator(req_data, 100)
+    page = request.GET.get('page')
+    req_data = paginator.get_page(page)
+    return render(request, 'mainapp/relief_center_list.html', {'filter': filter , "data" : req_data })
+ 
+
+class AddReliefCampDemand(CreateView):
+    model = ReliefCampDemand
+    template_name='mainapp/relief_camp_demand_form.html'
+    fields = [
+        'centerid',
+        'category',
+        'quantity',
+        'critical',
+        'quantity_type',
+    ]
+    success_url = '/req_sucess'
+
+class AddCollectionCenterSupply(CreateView):
+    model = CollectionCenterSupply
+    template_name='mainapp/collection_center_supply_form.html'
+    fields = [
+        'centerid',
+        'category',
+        'quantity',
+    ]
+    success_url = '/req_sucess'
+
+
+def relief_supply_request_list(request):
+    filter = RequestFilter(request.GET, queryset=ReliefCampDemand.objects.all() )
+    req_data = filter.qs.order_by('-center_id')
+    paginator = Paginator(req_data, 100)
+    page = request.GET.get('page')
+    req_data = paginator.get_page(page)
+    return render(request, 'mainapp/supply_request_list.html', {'filter': filter , "data" : req_data })
+
+def relief_supply_stock_list(request):
+    filter = RequestFilter(request.GET, queryset=CollectionCenterSupply.objects.all() )
+    req_data = filter.qs.order_by('-center_id')
+    paginator = Paginator(req_data, 100)
+    page = request.GET.get('page')
+    req_data = paginator.get_page(page)
+    return render(request, 'mainapp/supply_stock_list.html', {'filter': filter , "data" : req_data })
+ 
