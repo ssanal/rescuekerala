@@ -2,6 +2,7 @@ from django.http import HttpResponse
 from django.shortcuts import render
 from django.views.generic.edit import CreateView, UpdateView
 from django.views.generic.base import TemplateView
+from django.views.generic import ListView
 from .models import Request, Volunteer, DistrictManager, Contributor, DistrictNeed
 from .models import ReliefCenter, ReliefCampDemand, CollectionCenterSupply, SupplyTransaction, SupplyTransactionLog
 import django_filters
@@ -204,15 +205,27 @@ class UpdateReliefCenter(UpdateView):
         context['heading'] = "Update Relief Center"
         return context
 
+# TODO doesnt work 
+class ListReliefCenters(ListView):
+    model = ReliefCenter
+    paginate_by = 25
+    template_name = 'mainapp/relief_center_list.html'
 
-def relief_center_list(request):
-    filter = RequestFilter(request.GET, queryset=ReliefCenter.objects.all())
-    req_data = filter.qs.order_by('name')
-    paginator = Paginator(req_data, 100)
-    page = request.GET.get('page')
-    req_data = paginator.get_page(page)
-    return render(request, 'mainapp/relief_center_list.html', {'filter': filter, "data": req_data})
+    def get_context_data(self, **kwargs):
+        context =  super().get_context_data()
+        context['heading'] = "List Relief Centers"
+        return context
 
+    def get_queryset(self):
+        result = ReliefCenter.objects.all()
+        print ("get_queryset")
+        if self.request.GET.get("filter"):
+            selection = self.request.GET.get("filter")
+            if selection == "all":
+                result = ReliefCenter.objects.all()
+            else:
+                result = ReliefCenter.objects.filter(district=selection)
+        return result
 
 class AddReliefCampDemand(CreateView):
     model = ReliefCampDemand
